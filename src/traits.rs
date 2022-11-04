@@ -4,8 +4,8 @@ use std::cmp::Ordering;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 use std::fmt::{Debug, Display};
-use std::marker::Send;
-use std::marker::Sync;
+use std::hash::{Hash, Hasher};
+use std::marker::{Send, Sync};
 
 // Implement Send trait for the LinkedList
 // This marker trait indicates that the type
@@ -32,7 +32,7 @@ impl<T: Clone> Clone for LinkedList<T> {
     /// ```
     fn clone(&self) -> Self {
         let mut new_list = Self::new();
-        for elem in self.into_iter() {
+        for elem in self.iter() {
             new_list.push_back(elem.clone());
         }
         new_list
@@ -85,14 +85,15 @@ impl<T: Display> Display for LinkedList<T> {
 }
 
 // Implement Default trait for LinkedList
-/// Implement Default trait for LinkedList.
-/// ```
-/// use linked_list::LinkedList;
-/// let list: LinkedList<u32> = LinkedList::default();
-/// assert_eq!(list.len(), 0);
-/// assert_eq!(list.is_empty(), true);
-/// ```
+
 impl<T> Default for LinkedList<T> {
+    /// Creates a default empty list
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let list: LinkedList<u32> = LinkedList::default();
+    /// assert_eq!(list.len(), 0);
+    /// assert_eq!(list.is_empty(), true);
+    /// ```
     fn default() -> Self {
         Self::new()
     }
@@ -112,7 +113,18 @@ impl<T> Drop for LinkedList<T> {
 impl<T> IntoIterator for LinkedList<T> {
     type Item = T;
     type IntoIter = IntoIter<T>;
-
+    /// Returns IntoIter.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.push_back(1); list.push_back(2); list.push_back(3);
+    /// let mut iter = list.into_iter();
+    /// assert_eq!(iter.next(), Some(1));
+    /// assert_eq!(iter.next(), Some(2));
+    /// assert_eq!(iter.next(), Some(3));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    ///
     fn into_iter(self) -> Self::IntoIter {
         self.into_iter()
     }
@@ -124,6 +136,17 @@ impl<'a, T> IntoIterator for &'a LinkedList<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
 
+    /// Returns Iter.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.push_back(1); list.push_back(2); list.push_back(3);
+    /// let mut iter = list.iter();
+    /// assert_eq!(iter.next(), Some(&1));
+    /// assert_eq!(iter.next(), Some(&2));
+    /// assert_eq!(iter.next(), Some(&3));
+    /// assert_eq!(iter.next(), None);
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -135,6 +158,17 @@ impl<'a, T> IntoIterator for &'a mut LinkedList<T> {
     type Item = &'a mut T;
     type IntoIter = IterMut<'a, T>;
 
+    /// Returns IterMut.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.push_back(1); list.push_back(2); list.push_back(3);
+    /// let mut iter = list.iter_mut();
+    /// assert_eq!(iter.next(), Some(&mut 1));
+    /// assert_eq!(iter.next(), Some(&mut 2));
+    /// assert_eq!(iter.next(), Some(&mut 3));
+    /// assert_eq!(iter.next(), None);
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }
@@ -194,5 +228,99 @@ impl<T: Ord> Ord for LinkedList<T> {
     /// ```
     fn cmp(&self, other: &Self) -> Ordering {
         self.iter().cmp(other.iter())
+    }
+}
+
+// Implement Hash trait for LinkedList
+impl<T: Hash> Hash for LinkedList<T> {
+    /// Generate hash for a LikedList
+    /// ```
+    /// use std::collections::HashSet;
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.push_back(1); list.push_back(2); list.push_back(3);
+    /// let other_list = list.clone();
+    /// let mut set = HashSet::new();
+    /// set.insert(list);
+    /// assert!(set.contains(&other_list));
+    /// ```
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // include length of the list in the hash
+        self.len().hash(state);
+        // include each node element in the hash
+        for elem in self.iter() {
+            elem.hash(state);
+        }
+    }
+}
+
+// Implement From<[T;N]> trait for LinkedList
+impl<T, const N: usize> From<[T; N]> for LinkedList<T> {
+    /// Returns a new LinkedList from the given array
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let list = LinkedList::from([1, 2, 3]);
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.is_empty(), false);
+    /// assert!(list.iter().eq([1, 2, 3].iter()));
+    /// ```
+    fn from(arr: [T; N]) -> Self {
+        arr.into_iter().collect()
+    }
+}
+
+// Implement FromIterator<T> for LinkedList<T>
+impl<T> FromIterator<T> for LinkedList<T> {
+    /// Returns a new LinkedList from the given array
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let list: LinkedList<i32> = [1, 2, 3].into_iter().collect();
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.is_empty(), false);
+    /// assert!(list.iter().eq([1, 2, 3].iter()));
+    /// ```
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        // create a new empty list
+        let mut new_list = Self::new();
+        new_list.extend(iter);
+        new_list
+    }
+}
+
+// Implement Extend<T> for LinkedList<T>
+impl<T> Extend<T> for LinkedList<T> {
+    /// Returns a new LinkedList from the given array
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.extend([1, 2, 3].into_iter());
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.is_empty(), false);
+    /// assert!(list.iter().eq([1, 2, 3].iter()));
+    /// ```
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        // take each element in the interator and push_back into the list
+        for elem in iter.into_iter() {
+            self.push_back(elem);
+        }
+    }
+}
+
+// Implement Extend<T> for LinkedList<T>
+impl<'a, T: Clone + 'a> Extend<&'a T> for LinkedList<T> {
+    /// Returns a new LinkedList from the given array
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list: LinkedList<i32> = LinkedList::new();
+    /// list.extend([1, 2, 3].iter());
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.is_empty(), false);
+    /// assert!(list.iter().eq([1, 2, 3].iter()));
+    /// ```
+    fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+        // take each element in the interator and push_back into the list
+        for elem in iter.into_iter() {
+            self.push_back(elem.clone());
+        }
     }
 }

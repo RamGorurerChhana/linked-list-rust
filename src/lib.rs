@@ -36,24 +36,24 @@
 //! - split
 //! - splice
 //! ## Traits
-//! - Clone
-//! - Debug
-//! - Default
-//! - Drop
-//! - Eq
-//! - PartialEq
-//! - Ord
-//! - PartialOrd
-//! - Extend<&'a T>
-//! - Extend<T>
-//! - From<[T;N]>
-//! - FromIterator<T>
-//! - Hash
-//! - IntoIterator for &'a LinkedList<T>
-//! - IntoIterator for &'a mut LinkedList<T>
-//! - IntoIterator for LinkedList<T>
-//! - Send
-//! - Sync
+//! - [] Clone
+//! - [] Debug
+//! - [] Default
+//! - [] Drop
+//! - [] Eq
+//! - [] PartialEq
+//! - [] Ord
+//! - [] PartialOrd
+//! - [] Extend<&'a T>
+//! - [] Extend<T>
+//! - [] From<[T;N]>
+//! - [] FromIterator<T>
+//! - [] Hash
+//! - [] IntoIterator for &'a LinkedList<T>
+//! - [] IntoIterator for &'a mut LinkedList<T>
+//! - [] IntoIterator for LinkedList<T>
+//! - [] Send
+//! - [] Sync
 //!
 //!
 //! Thats lot of work already 😢
