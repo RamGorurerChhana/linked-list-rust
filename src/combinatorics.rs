@@ -293,36 +293,3 @@ impl<T> LinkedList<T> {
         IntoIter(self)
     }
 }
-
-// Implement `IntoIterator` for type `LinkedList<T>`.
-// It will yields owned value T when `next` is called on the iterator.
-impl<T> IntoIterator for LinkedList<T> {
-    type Item = T;
-    type IntoIter = IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.into_iter()
-    }
-}
-
-// Implement `IntoIterator` for type `&LinkedList<T>`.
-// It will yields &T when `next` is called on the iterator.
-impl<'a, T> IntoIterator for &'a LinkedList<T> {
-    type Item = &'a T;
-    type IntoIter = Iter<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-// Implement `IntoIterator` for type `&mut LinkedList<T>`.
-// It will yields &mut T when `next` is called on the iterator.
-impl<'a, T> IntoIterator for &'a mut LinkedList<T> {
-    type Item = &'a mut T;
-    type IntoIter = IterMut<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
-    }
-}
