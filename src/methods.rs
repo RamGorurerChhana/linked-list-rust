@@ -6,7 +6,7 @@ use std::ptr;
 impl<T> Node<T> {
     // creates a new instance of Node
     // prev and next pointers are initialized with null values
-    fn new(val: T) -> Self {
+    pub(crate) fn new(val: T) -> Self {
         Self {
             val,
             prev: ptr::null_mut(),
@@ -65,6 +65,35 @@ impl<T> LinkedList<T> {
     /// ```
     pub fn is_empty(&self) -> bool {
         self.head.is_null()
+    }
+
+    /// Removes all nodes from the list.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = [1, 2, 3].into_iter().collect::<LinkedList<i32>>();
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.is_empty(), false);
+    /// list.clear();
+    /// assert_eq!(list.len(), 0);
+    /// assert_eq!(list.is_empty(), true);
+    /// ```
+    pub fn clear(&mut self) {
+        // pop off all nodes from the list until list is empty
+        while self.pop_front().is_some() {}
+    }
+
+    /// Returns true if the list contains the given value otherwise false.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let list = [1, 2, 3].into_iter().collect::<LinkedList<i32>>();
+    /// assert_eq!(list.contains(&3), true);
+    /// assert_eq!(list.contains(&4), false);
+    /// ```
+    pub fn contains(&self, item: &T) -> bool
+    where
+        T: PartialEq,
+    {
+        self.iter().any(|x| x == item)
     }
 
     /// Adds a new node onto the front of the list.
@@ -195,5 +224,128 @@ impl<T> LinkedList<T> {
             // return the value inside node
             Some(node.val)
         }
+    }
+
+    /// Returns the reference to the first element from the front
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// assert_eq!(list.peek_front(), None);
+    /// list.push_front(1); list.push_front(2); list.push_front(3);
+    /// assert_eq!(list.peek_front(), Some(&3));
+    /// ```
+    pub fn peek_front(&self) -> Option<&T> {
+        // if head is null then list is empty, return None
+        if self.head.is_null() {
+            return None;
+        }
+        unsafe {
+            // return the reference to the value contains in the node
+            // the head is pointing to
+            Some(&(*self.head).val)
+        }
+    }
+
+    /// Returns mutable reference to the first element from the front
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// assert_eq!(list.peek_front_mut(), None);
+    /// list.push_front(1); list.push_front(2); list.push_front(3);
+    /// assert_eq!(list.peek_front_mut(), Some(&mut 3));
+    /// ```
+    pub fn peek_front_mut(&self) -> Option<&mut T> {
+        // if head is null then list is empty, return None
+        if self.head.is_null() {
+            return None;
+        }
+        unsafe {
+            // return the reference to the value contains in the node
+            // the head is pointing to
+            Some(&mut (*self.head).val)
+        }
+    }
+
+    /// Returns the reference to the last element from the back
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// assert_eq!(list.peek_back(), None);
+    /// list.push_front(1); list.push_front(2); list.push_front(3);
+    /// assert_eq!(list.peek_back(), Some(&1));
+    /// ```
+    pub fn peek_back(&self) -> Option<&T> {
+        // if tail is null then list is empty, return None
+        if self.tail.is_null() {
+            return None;
+        }
+        unsafe {
+            // return the reference to the value contains in the node
+            // the head is pointing to
+            Some(&(*self.tail).val)
+        }
+    }
+
+    /// Returns the reference to the last element from the back
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// assert_eq!(list.peek_back_mut(), None);
+    /// list.push_front(1); list.push_front(2); list.push_front(3);
+    /// assert_eq!(list.peek_back_mut(), Some(&mut 1));
+    /// ```
+    pub fn peek_back_mut(&self) -> Option<&mut T> {
+        // if tail is null then list is empty, return None
+        if self.tail.is_null() {
+            return None;
+        }
+        unsafe {
+            // return the reference to the value contains in the node
+            // the head is pointing to
+            Some(&mut (*self.tail).val)
+        }
+    }
+
+    /// Moves all elements from `other` to the end of the list.
+    /// This reuses all the nodes from other and moves them into self.
+    /// After this operation, other becomes empty.
+    /// This operation should compute in O(1) time and O(1) memory.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list1 = LinkedList::new();
+    /// list1.push_back('a'); list1.push_back('b'); list1.push_back('c');
+    /// let mut list2 = LinkedList::new();
+    /// list2.push_back('d');
+    /// assert_eq!(list1.len(), 3);
+    /// assert_eq!(list2.len(), 1);
+    /// list1.append(&mut list2);
+    /// assert_eq!(list1.len(), 4);
+    /// assert_eq!(list2.len(), 0);
+    /// assert_eq!(list2.is_empty(), true);
+    /// assert_eq!(list1.peek_back(), Some(&'d'));
+    /// assert_eq!(list1.peek_front(), Some(&'a'));
+    /// ```
+    pub fn append(&mut self, other: &mut Self) {
+        // if others is empty nothing to be done
+        if other.is_empty() {
+            return;
+        }
+        unsafe {
+            // if self is not empty then next of current tail
+            // will point to other head
+            if !self.tail.is_null() {
+                (*self.tail).next = other.head;
+            }
+        }
+        // set tail as the other tail
+        self.tail = other.tail;
+        // if head is null then set head as the other head
+        if self.head.is_null() {
+            self.head = other.head;
+        }
+        // clear head and tail in other list
+        // so that it becomes empty
+        other.head = ptr::null_mut();
+        other.tail = ptr::null_mut();
     }
 }

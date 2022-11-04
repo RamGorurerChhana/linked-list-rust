@@ -11,20 +11,20 @@
 //! - Memory leaks
 //! - Dangling pointers
 //! ## Methods
-//! - append
-//! - peek_back
-//! - peek_back_mut
-//! - clear
-//! - contains
-//! - cursor_back
-//! - cursor_back_mut
-//! - cursor_front
-//! - cursor_front_mut
-//! - peek_front
-//! - peek_front_mut
+//! - [] append
+//! - [] peek_back
+//! - [] peek_back_mut
+//! - [] clear
+//! - [] contains
+//! - [] cursor_back
+//! - [] cursor_back_mut
+//! - [] cursor_front
+//! - [] cursor_front_mut
+//! - [] peek_front
+//! - [] peek_front_mut
 //! - [] is_empty
-//! - iter
-//! - iter_mut
+//! - [] iter
+//! - [] iter_mut
 //! - [] len
 //! - [] new
 //! - [] push_front
@@ -62,6 +62,7 @@
 use std::marker::PhantomData;
 
 mod combinatorics;
+mod cursors;
 mod methods;
 mod traits;
 
@@ -93,21 +94,15 @@ struct Node<T> {
 mod tests {
     use super::*;
 
-    // fn test_test() {
-    //     let v = vec![1, 2, 3];
-    //     let mut iter = v.into_iter();
-    //     println!("{:?}", iter.next());
-    // }
+    #[derive(Debug, PartialEq)]
+    struct MyStruct(i32);
 
     #[test]
     fn test_list_1() {
         let mut list = LinkedList::new();
-        list.push_front(1);
-        list.push_front(2);
-        list.push_front(3);
-        assert_eq!(list.pop_front(), Some(3));
-        assert_eq!(list.pop_front(), Some(2));
-        assert_eq!(list.pop_front(), Some(1));
-        assert_eq!(list.pop_front(), None);
+        list.push_front(MyStruct(1));
+        list.push_front(MyStruct(2));
+        list.push_front(MyStruct(3));
+        assert_eq!(list.contains(&MyStruct(1)), true);
     }
 }
