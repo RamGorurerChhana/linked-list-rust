@@ -176,12 +176,34 @@ impl<'a, T> Cursor<'a, T> {
     pub fn step_by(&mut self, steps: usize) {
         // calculate the final_index the cursor to move to
         let final_index = (self.index + (steps % self.length)) % self.length;
-        // if final_index is less than current index then call move_prev repeatedly
-        if self.index > final_index {
-            (final_index..self.index).for_each(|_| self.move_prev());
+        // if final_index is same as current index then no move required
+        if final_index == self.index {
+            return;
         }
-        // call move_next repeatedly to reach final_index
-        (self.index..final_index).for_each(|_| self.move_next());
+        // decide which is closer? forward move or backward move
+        let (direction, steps) = if final_index > self.index {
+            let dist = final_index - self.index;
+            let alt_dist = self.length - dist;
+            if alt_dist < dist {
+                ("backward", alt_dist)
+            } else {
+                ("forward", dist)
+            }
+        } else {
+            let dist = self.index - final_index;
+            let alt_dist = self.length - dist;
+            if dist < alt_dist {
+                ("backward", dist)
+            } else {
+                ("forward", alt_dist)
+            }
+        };
+
+        if direction == "backward" {
+            (0..steps).for_each(|_| self.move_prev());
+        } else {
+            (0..steps).for_each(|_| self.move_next());
+        }
     }
 
     /// Move the cursor backward no of steps at once.

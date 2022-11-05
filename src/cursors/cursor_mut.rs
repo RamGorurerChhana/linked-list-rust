@@ -1,5 +1,6 @@
 use crate::LinkedList;
 use crate::Node;
+use crate::RemoveUnderCursorError;
 
 pub struct CursorMut<'a, T> {
     pub(super) curr: *mut Node<T>,
@@ -201,6 +202,7 @@ impl<'a, T> CursorMut<'a, T> {
     /// assert_eq!(cursor.current_mut(), (&mut 6, 5));
     /// assert_eq!(cursor.prev_mut(), (&mut 5, 4));
     /// assert_eq!(cursor.next_mut(), (&mut 1, 0));
+    /// assert_eq!(list.len(), 6);
     /// ```
     pub fn insert(&mut self, elem: T) {
         // create a new_node
@@ -221,5 +223,61 @@ impl<'a, T> CursorMut<'a, T> {
         self.length += 1;
         // move the cursor to next node
         self.move_next();
+    }
+
+    /// Removes the node under the cursor and cursor moves to be node next
+    /// Note: Returns error if the list contain only one node
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4, 5]);
+    /// let mut cursor = list.cursor_back_mut().unwrap();
+    /// assert!(cursor.remove().is_ok());
+    /// assert_eq!(cursor.current_mut(), (&mut 1, 0));
+    /// assert_eq!(cursor.prev_mut(), (&mut 4, 3));
+    /// assert_eq!(cursor.next_mut(), (&mut 2, 1));
+    /// assert_eq!(list.len(), 4);
+    /// let mut cursor = list.cursor_front_mut().unwrap();
+    /// assert!(cursor.remove().is_ok());
+    /// assert_eq!(cursor.current_mut(), (&mut 2, 0));
+    /// assert_eq!(cursor.prev_mut(), (&mut 4, 2));
+    /// assert_eq!(cursor.next_mut(), (&mut 3, 1));
+    /// assert_eq!(list.len(), 3);
+    /// ```
+    pub fn remove(&mut self) -> Result<T, RemoveUnderCursorError> {
+        if self.length < 2 {
+            return Err(RemoveUnderCursorError);
+        }
+        unsafe {
+            // take out the node currently under the cursor
+            let boxed_node = Box::from_raw(self.curr);
+            // if the `prev` of `boxed_node` is not null
+            // then `next` of `prev` of `boxed_node` will point to `next` of `boxed_node`
+            if !boxed_node.prev.is_null() {
+                (*boxed_node.prev).next = boxed_node.next;
+            } else {
+                // boxed_node is the first node in the list
+                // `head` pointer of the list now point to `next` of `boxed_node`
+                self.list.head = boxed_node.next;
+            }
+
+            // if the `next` of `boxed_node` is not null
+            // then `prev` of `next` of `boxed_node` will point to `prev` of `boxed_node`
+            if !boxed_node.next.is_null() {
+                (*boxed_node.next).prev = boxed_node.prev;
+                // curr will now point to `next` of `boxed_node`
+                self.curr = boxed_node.next;
+            } else {
+                // boxed_node is the last node in the list
+                // tail pointer of the list now point to `prev` of `boxed_node`
+                self.list.tail = boxed_node.prev;
+                // curr will now point to head of the list
+                self.curr = self.list.head;
+            }
+            // adjust length of the cursor and index
+            self.length -= 1;
+            self.index = self.index % self.length;
+
+            Ok(boxed_node.val)
+        }
     }
 }

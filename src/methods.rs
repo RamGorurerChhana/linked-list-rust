@@ -1,5 +1,6 @@
 use crate::LinkedList;
 use crate::Node;
+use crate::RemoveUnderCursorError;
 use std::marker::PhantomData;
 use std::ptr;
 
@@ -347,5 +348,54 @@ impl<T> LinkedList<T> {
         // so that it becomes empty
         other.head = ptr::null_mut();
         other.tail = ptr::null_mut();
+    }
+
+    /// Insert a node at a given index.
+    /// Note: Final index at the list will wrap around when length of the list is lesser.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4]);
+    /// list.insert_at(5, 4);
+    /// assert_eq!(list.len(), 5);
+    /// assert_eq!(list.peek_back(), Some(&5));
+    /// ```
+    pub fn insert_at(&mut self, elem: T, index: usize) {
+        // if list is empty then just push the element to the list
+        if self.is_empty() || index == 0 {
+            return self.push_front(elem);
+        }
+        let mut cursor = self.cursor_front_mut().unwrap();
+        cursor.step_by(index - 1);
+        cursor.insert(elem);
+    }
+
+    /// Remove a node at a given index.
+    /// Note: Final index at the list will wrap around when length of the list is lesser.
+    /// If the list is empty then it throws error
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4]);
+    /// list.remove_at(2);
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.peek_back(), Some(&4));
+    /// ```
+    pub fn remove_at(&mut self, index: usize) -> Result<T, RemoveUnderCursorError> {
+        // if list is empty then throw error
+        if self.is_empty() {
+            return Err(RemoveUnderCursorError);
+        }
+        let len = self.len();
+        let index = index % len;
+        // if first element to be removed
+        if index == 0 {
+            return self.pop_front().ok_or(RemoveUnderCursorError);
+        }
+        // if last element to be removed
+        if index == len - 1 {
+            return self.pop_back().ok_or(RemoveUnderCursorError);
+        }
+        let mut cursor = self.cursor_front_mut().unwrap();
+        cursor.step_by(index - 1);
+        cursor.remove()
     }
 }

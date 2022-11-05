@@ -31,8 +31,8 @@
 //! - [] push_back
 //! - [] pop_front
 //! - [] pop_back
-//! - remove_at
-//! - insert_at
+//! - [] remove_at
+//! - [] insert_at
 //! - split
 //! - splice
 //! ## Traits
@@ -59,6 +59,10 @@
 //! Thats lot of work already 😢
 //!
 
+use std::error::Error;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+use std::fmt::{Debug, Display};
 use std::marker::PhantomData;
 
 mod combinatorics;
@@ -89,6 +93,19 @@ struct Node<T> {
     prev: *mut Node<T>,
     next: *mut Node<T>,
 }
+
+pub struct RemoveUnderCursorError;
+impl Debug for RemoveUnderCursorError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "RemoveUnderCursorError: Node under the cursor cannot be removed when only one node is left.")
+    }
+}
+impl Display for RemoveUnderCursorError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "RemoveUnderCursorError: Node under the cursor cannot be removed when only one node is left.")
+    }
+}
+impl Error for RemoveUnderCursorError {}
 
 #[cfg(test)]
 mod tests {
