@@ -398,4 +398,46 @@ impl<T> LinkedList<T> {
         cursor.step_by(index - 1);
         cursor.remove()
     }
+
+    /// Splits the list at a given index. Returns a new list.
+    /// Note: Final index at the list will wrap around when length of the list is lesser.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4]);
+    /// let new_list = list.split_at(2);
+    /// assert_eq!(list.len(), 3);
+    /// assert_eq!(list.peek_back(), Some(&3));
+    /// assert_eq!(new_list.len(), 1);
+    /// assert_eq!(new_list.peek_back(), Some(&4));
+    /// ```
+    pub fn split_at(&mut self, index: usize) -> Self {
+        if self.is_empty() {
+            return Self::new();
+        }
+        let mut cursor = self.cursor_front_mut().unwrap();
+        cursor.step_by(index);
+        cursor.split()
+    }
+
+    /// Splice the list at a given index
+    /// Note: Final index at the list will wrap around when length of the list is lesser.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4]);
+    /// list.splice_at(LinkedList::from([10, 11]), 2);
+    /// assert_eq!(list.len(), 6);
+    /// assert_eq!(list.peek_back(), Some(&4));
+    /// ```
+    pub fn splice_at(&mut self, mut other: Self, index: usize) {
+        if self.is_empty() {
+            self.head = other.head;
+            self.tail = other.tail;
+            other.head = ptr::null_mut();
+            other.tail = ptr::null_mut();
+            return;
+        }
+        let mut cursor = self.cursor_front_mut().unwrap();
+        cursor.step_by(index);
+        cursor.splice(other);
+    }
 }

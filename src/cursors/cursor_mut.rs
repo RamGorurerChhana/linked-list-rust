@@ -1,3 +1,5 @@
+use std::ptr;
+
 use crate::LinkedList;
 use crate::Node;
 use crate::RemoveUnderCursorError;
@@ -279,5 +281,67 @@ impl<'a, T> CursorMut<'a, T> {
 
             Ok(boxed_node.val)
         }
+    }
+
+    /// Split the list at the node where the cursor is pointing to.
+    /// After split the node under the cursor becomes the last node of the list.
+    /// A new list is generated and returned with all rest of the elements
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4, 5]);
+    /// let mut cursor = list.cursor_front_mut().unwrap();
+    /// let new_list = cursor.split();
+    /// assert_eq!(list.len(), 1);
+    /// assert_eq!(new_list.len(), 4);
+    /// assert_eq!(new_list.peek_front(), Some(&2));
+    /// assert_eq!(list.peek_back(), Some(&1));
+    /// ```
+    pub fn split(&mut self) -> LinkedList<T> {
+        let mut new_list = LinkedList::new();
+        unsafe {
+            if !(*self.curr).next.is_null() {
+                new_list.tail = self.list.tail;
+                new_list.head = (*self.curr).next;
+                (*self.curr).next = ptr::null_mut();
+                self.list.tail = self.curr;
+                self.length = self.list.len();
+            }
+        }
+
+        new_list
+    }
+
+    /// Insert the given list into the underlying list.
+    /// Cursor advances until the last node of the other list.
+    /// ```
+    /// use linked_list::LinkedList;
+    /// let mut list = LinkedList::from([1, 2, 3, 4, 5]);
+    /// let mut cursor = list.cursor_front_mut().unwrap();
+    /// cursor.step_by(2);
+    /// cursor.splice(LinkedList::from([10, 11]));
+    /// assert_eq!(cursor.current_mut(), (&mut 11, 4));
+    /// assert_eq!(cursor.prev_mut(), (&mut 10, 3));
+    /// assert_eq!(cursor.next_mut(), (&mut 4, 5));
+    /// assert_eq!(list.len(), 7);
+    /// ```
+    pub fn splice(&mut self, mut other: LinkedList<T>) {
+        if other.is_empty() {
+            return;
+        }
+        let other_len = other.len();
+        unsafe {
+            if !(*self.curr).next.is_null() {
+                (*(*self.curr).next).prev = other.tail;
+                (*other.tail).next = (*self.curr).next;
+            } else {
+                self.list.tail = other.tail;
+            }
+            (*self.curr).next = other.head;
+            self.curr = other.tail;
+        }
+        self.length += other_len;
+        self.index += other_len;
+        other.head = ptr::null_mut();
+        other.tail = ptr::null_mut();
     }
 }

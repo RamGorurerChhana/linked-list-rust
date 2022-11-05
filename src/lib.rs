@@ -33,8 +33,8 @@
 //! - [] pop_back
 //! - [] remove_at
 //! - [] insert_at
-//! - split
-//! - splice
+//! - [] split_at
+//! - [] splice_at
 //! ## Traits
 //! - [] Clone
 //! - [] Debug
