@@ -1,6 +1,5 @@
 use crate::Link;
 use crate::LinkedList;
-use crate::Node;
 
 pub struct Cursor<'a, T> {
     pub(super) curr: Link<T>,

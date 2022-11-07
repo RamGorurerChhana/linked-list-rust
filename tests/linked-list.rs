@@ -103,6 +103,20 @@ fn test_push_pop_mixup() {
 }
 
 #[test]
+fn test_push_front_no_pop() {
+    let mut list = LinkedList::new();
+    (0..4).into_iter().for_each(|n| list.push_front(n));
+    assert_eq!(list.len(), 4);
+}
+
+#[test]
+fn test_push_back_no_pop() {
+    let mut list = LinkedList::new();
+    (0..4).into_iter().for_each(|n| list.push_back(n));
+    assert_eq!(list.len(), 4);
+}
+
+#[test]
 fn test_list_clear() {
     let mut list = (0..10).into_iter().collect::<LinkedList<u32>>();
     assert_eq!(list.len(), 10);
@@ -167,5 +181,61 @@ fn test_list_insert_at() {
     assert!(list.iter().cloned().eq(expected));
     let mut list = LinkedList::new();
     list.extend((0..5).into_iter());
-    assert_eq!(list.pop_back(), Some(4));
+    list.insert_at(5, 10);
+    assert_eq!(list.pop_back(), Some(5));
+}
+
+#[test]
+fn test_memory_cleanup() {
+    use std::cell::Cell;
+    struct DropCounter<'a>(&'a Cell<usize>);
+    impl<'a> Drop for DropCounter<'a> {
+        fn drop(&mut self) {
+            let num = self.0.get();
+            self.0.set(num + 1);
+        }
+    }
+    let total = 10;
+    let counter = Cell::new(0);
+    let list = (0..total)
+        .map(|_| DropCounter(&counter))
+        .collect::<LinkedList<_>>();
+    assert_eq!(list.len(), total);
+    drop(list);
+    assert_eq!(counter.get(), total);
+}
+
+#[test]
+fn test_remove_at() {
+    let mut list = LinkedList::new();
+    assert_eq!(list.remove_at(0).is_err(), true);
+    (0..4).for_each(|n| list.insert_at(n, 0));
+    (0..4).for_each(|n| assert_eq!(list.remove_at(0).unwrap(), 3 - n));
+    assert_eq!(list.remove_at(0), Err(RemoveUnderCursorError));
+    assert!(list.is_empty());
+    let mut list = LinkedList::from([1, 2, 3, 4, 5]);
+    (1..6)
+        .rev()
+        .for_each(|n| assert_eq!(list.remove_at(n - 1).unwrap(), n));
+    let mut list = LinkedList::from([1, 2, 3, 4, 5]);
+    assert_eq!(list.remove_at(2).unwrap(), 3);
+    assert_eq!(list.remove_at(2).unwrap(), 4);
+    assert_eq!(list.remove_at(2).unwrap(), 5);
+    assert_eq!(list.remove_at(2).unwrap(), 1);
+    assert_eq!(list.remove_at(2).unwrap(), 2);
+}
+
+#[test]
+fn test_split_at() {
+    let mut list = LinkedList::new();
+    list.extend(0..5);
+    let other = list.split_at(5);
+    assert_eq!(list.len(), 5);
+    assert_eq!(other.len(), 0);
+    let other = list.split_at(3);
+    assert_eq!(list.len(), 4);
+    assert_eq!(other.len(), 1);
+    let other = list.split_at(0);
+    assert_eq!(list.len(), 1);
+    assert_eq!(other.len(), 3);
 }

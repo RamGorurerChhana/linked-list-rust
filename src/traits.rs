@@ -10,12 +10,12 @@ use std::marker::{Send, Sync};
 // Implement Send trait for the LinkedList
 // This marker trait indicates that the type
 // is safe to send to another thread.
-unsafe impl<T> Send for LinkedList<T> {}
+unsafe impl<T: Send> Send for LinkedList<T> {}
 
 // Implement Sync trait for the LinkedList
 // This marker trait indicates that the type
 // is safe to share accross threads.
-unsafe impl<T> Sync for LinkedList<T> {}
+unsafe impl<T: Sync> Sync for LinkedList<T> {}
 
 // Implement Clone trait for LinkedList
 // This will provide the ability to create a duplicate list from a given list.

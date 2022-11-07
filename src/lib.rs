@@ -101,6 +101,7 @@ fn to_mut_ptr<T>(ptr: Link<T>) -> LinkMut<T> {
     ptr as LinkMut<T>
 }
 
+#[derive(PartialEq)]
 pub struct RemoveUnderCursorError;
 impl Debug for RemoveUnderCursorError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
@@ -131,6 +132,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(dead_code)]
     fn is_covariant() {
         fn a<'a>(x: LinkedList<&'static str>) -> LinkedList<&'a str> {
             x

@@ -289,7 +289,7 @@ impl<'a, T> CursorMut<'a, T> {
             }
             // adjust length of the cursor and index
             self.length -= 1;
-            self.index = self.index % self.length;
+            self.index %= self.length;
 
             Ok(boxed_node.val)
         }

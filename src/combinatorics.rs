@@ -1,5 +1,5 @@
+use crate::to_mut_ptr;
 use crate::Link;
-use crate::LinkMut;
 use crate::LinkedList;
 use std::iter::FusedIterator;
 use std::marker::PhantomData;
@@ -123,7 +123,7 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 
         unsafe {
             // copy the current head
-            let curr = self.head as LinkMut<T>;
+            let curr = to_mut_ptr(self.head);
             // set head as the `next` of the current head
             self.head = (*self.head).next;
             // if head is becoming null then reset tail as null too
@@ -165,7 +165,7 @@ impl<'a, T> DoubleEndedIterator for IterMut<'a, T> {
 
         unsafe {
             // copy the current tail
-            let curr = self.tail as LinkMut<T>;
+            let curr = to_mut_ptr(self.tail);
             // set tail as the `prev` of the current tail
             self.tail = (*self.tail).prev;
             // if tail is becoming null then reset head as null too
@@ -290,6 +290,7 @@ impl<T> LinkedList<T> {
     /// assert_eq!(iter.next(), Some(1));
     /// assert_eq!(iter.next(), None);
     /// ```
+    #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> IntoIter<T> {
         IntoIter(self)
     }
