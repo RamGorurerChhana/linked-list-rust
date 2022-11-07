@@ -1,11 +1,13 @@
 use std::ptr;
 
+use crate::Link;
+use crate::LinkMut;
 use crate::LinkedList;
 use crate::Node;
 use crate::RemoveUnderCursorError;
 
 pub struct CursorMut<'a, T> {
-    pub(super) curr: *mut Node<T>,
+    pub(super) curr: Link<T>,
     pub(super) list: &'a mut LinkedList<T>,
     pub(super) index: usize,
     pub(super) length: usize,
@@ -28,7 +30,10 @@ impl<'a, T> CursorMut<'a, T> {
         }
 
         // return the reference to the value under curr pointer
-        unsafe { (&mut (*self.curr).val, self.index) }
+        unsafe {
+            let curr = self.curr as LinkMut<T>;
+            (&mut (*curr).val, self.index)
+        }
     }
 
     /// Returns the mutable reference to the value previous to the node under the cursor and its index
@@ -61,10 +66,12 @@ impl<'a, T> CursorMut<'a, T> {
         unsafe {
             if self.index == 0 {
                 // when on the first element return the value from tail of the list
-                (&mut (*self.list.tail).val, self.length - 1)
+                let tail = self.list.tail as LinkMut<T>;
+                (&mut (*tail).val, self.length - 1)
             } else {
                 // otherwise return the value from prev of curr
-                (&mut (*(*self.curr).prev).val, self.index - 1)
+                let curr_prev = (*self.curr).prev as LinkMut<T>;
+                (&mut (*curr_prev).val, self.index - 1)
             }
         }
     }
@@ -95,10 +102,12 @@ impl<'a, T> CursorMut<'a, T> {
         unsafe {
             if self.index == self.length - 1 {
                 // when on the last element return the value from head of the list
-                (&mut (*self.list.head).val, 0)
+                let head = self.list.head as LinkMut<T>;
+                (&mut (*head).val, 0)
             } else {
                 // otherwise return the value from next of curr
-                (&mut (*(*self.curr).next).val, self.index + 1)
+                let curr_next = (*self.curr).next as LinkMut<T>;
+                (&mut (*curr_next).val, self.index + 1)
             }
         }
     }
@@ -215,11 +224,12 @@ impl<'a, T> CursorMut<'a, T> {
             // set the current node as the prev of new_node
             (*new_node).prev = self.curr;
             // set next of curr as the new_node
-            (*self.curr).next = new_node;
+            let curr = self.curr as LinkMut<T>;
+            (*curr).next = new_node as Link<T>;
         }
         // if at last element then adjust tail pointer of the list
         if self.index == self.length - 1 {
-            self.list.tail = new_node;
+            self.list.tail = new_node as Link<T>;
         }
         // increase length of the cursor
         self.length += 1;
@@ -251,11 +261,12 @@ impl<'a, T> CursorMut<'a, T> {
         }
         unsafe {
             // take out the node currently under the cursor
-            let boxed_node = Box::from_raw(self.curr);
+            let boxed_node = Box::from_raw(self.curr as LinkMut<T>);
             // if the `prev` of `boxed_node` is not null
             // then `next` of `prev` of `boxed_node` will point to `next` of `boxed_node`
             if !boxed_node.prev.is_null() {
-                (*boxed_node.prev).next = boxed_node.next;
+                let node_prev = boxed_node.prev as LinkMut<T>;
+                (*node_prev).next = boxed_node.next;
             } else {
                 // boxed_node is the first node in the list
                 // `head` pointer of the list now point to `next` of `boxed_node`
@@ -265,7 +276,8 @@ impl<'a, T> CursorMut<'a, T> {
             // if the `next` of `boxed_node` is not null
             // then `prev` of `next` of `boxed_node` will point to `prev` of `boxed_node`
             if !boxed_node.next.is_null() {
-                (*boxed_node.next).prev = boxed_node.prev;
+                let node_next = boxed_node.next as LinkMut<T>;
+                (*node_next).prev = boxed_node.prev;
                 // curr will now point to `next` of `boxed_node`
                 self.curr = boxed_node.next;
             } else {
@@ -302,7 +314,7 @@ impl<'a, T> CursorMut<'a, T> {
             if !(*self.curr).next.is_null() {
                 new_list.tail = self.list.tail;
                 new_list.head = (*self.curr).next;
-                (*self.curr).next = ptr::null_mut();
+                (*(self.curr as LinkMut<T>)).next = ptr::null();
                 self.list.tail = self.curr;
                 self.length = self.list.len();
             }
@@ -331,17 +343,19 @@ impl<'a, T> CursorMut<'a, T> {
         let other_len = other.len();
         unsafe {
             if !(*self.curr).next.is_null() {
-                (*(*self.curr).next).prev = other.tail;
-                (*other.tail).next = (*self.curr).next;
+                let curr_next = (*self.curr).next as LinkMut<T>;
+                let other_tail = other.tail as LinkMut<T>;
+                (*curr_next).prev = other.tail;
+                (*other_tail).next = (*self.curr).next;
             } else {
                 self.list.tail = other.tail;
             }
-            (*self.curr).next = other.head;
+            (*(self.curr as LinkMut<T>)).next = other.head;
             self.curr = other.tail;
         }
         self.length += other_len;
         self.index += other_len;
-        other.head = ptr::null_mut();
-        other.tail = ptr::null_mut();
+        other.head = ptr::null();
+        other.tail = ptr::null();
     }
 }

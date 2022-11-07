@@ -1,8 +1,9 @@
+use crate::Link;
 use crate::LinkedList;
 use crate::Node;
 
 pub struct Cursor<'a, T> {
-    pub(super) curr: *mut Node<T>,
+    pub(super) curr: Link<T>,
     pub(super) list: &'a LinkedList<T>,
     pub(super) index: usize,
     pub(super) length: usize,

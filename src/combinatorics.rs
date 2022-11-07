@@ -1,12 +1,13 @@
+use crate::Link;
+use crate::LinkMut;
 use crate::LinkedList;
-use crate::Node;
 use std::iter::FusedIterator;
 use std::marker::PhantomData;
 use std::ptr;
 
 pub struct Iter<'a, T> {
-    head: *mut Node<T>,
-    tail: *mut Node<T>,
+    head: Link<T>,
+    tail: Link<T>,
     size: usize,
     _phantom: &'a PhantomData<T>,
 }
@@ -93,8 +94,8 @@ impl<'a, T> ExactSizeIterator for Iter<'a, T> {}
 impl<'a, T> FusedIterator for Iter<'a, T> {}
 
 pub struct IterMut<'a, T> {
-    head: *mut Node<T>,
-    tail: *mut Node<T>,
+    head: Link<T>,
+    tail: Link<T>,
     size: usize,
     _phantom: &'a PhantomData<T>,
 }
@@ -122,7 +123,7 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 
         unsafe {
             // copy the current head
-            let curr = self.head;
+            let curr = self.head as LinkMut<T>;
             // set head as the `next` of the current head
             self.head = (*self.head).next;
             // if head is becoming null then reset tail as null too
@@ -164,7 +165,7 @@ impl<'a, T> DoubleEndedIterator for IterMut<'a, T> {
 
         unsafe {
             // copy the current tail
-            let curr = self.tail;
+            let curr = self.tail as LinkMut<T>;
             // set tail as the `prev` of the current tail
             self.tail = (*self.tail).prev;
             // if tail is becoming null then reset head as null too

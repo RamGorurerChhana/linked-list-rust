@@ -55,6 +55,7 @@ impl<T: Debug> Debug for LinkedList<T> {
         // walk over the entire list and debug print each node.
         while !head.is_null() {
             unsafe {
+                debug_list.entry(&head);
                 debug_list.entry(&*head);
                 head = (*head).next;
             }

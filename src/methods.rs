@@ -1,3 +1,6 @@
+use crate::to_mut_ptr;
+use crate::Link;
+use crate::LinkMut;
 use crate::LinkedList;
 use crate::Node;
 use crate::RemoveUnderCursorError;
@@ -10,8 +13,8 @@ impl<T> Node<T> {
     pub(crate) fn new(val: T) -> Self {
         Self {
             val,
-            prev: ptr::null_mut(),
-            next: ptr::null_mut(),
+            prev: ptr::null(),
+            next: ptr::null(),
         }
     }
 }
@@ -25,8 +28,8 @@ impl<T> LinkedList<T> {
     /// ```
     pub fn new() -> Self {
         Self {
-            head: ptr::null_mut(),
-            tail: ptr::null_mut(),
+            head: ptr::null(),
+            tail: ptr::null(),
             _phantom: PhantomData,
         }
     }
@@ -117,15 +120,15 @@ impl<T> LinkedList<T> {
         // if head is null that means list is empty
         // tail will also point to new_node.
         if self.head.is_null() {
-            self.tail = new_node;
+            self.tail = new_node as Link<T>;
         } else {
             unsafe {
                 // otherwise `prev` of current head will point to new_node
-                (*self.head).prev = new_node;
+                (*(self.head as LinkMut<T>)).prev = new_node as Link<T>;
             }
         }
         // and head will be set to new_node
-        self.head = new_node;
+        self.head = new_node as Link<T>;
     }
 
     /// Adds a new node onto the back of the list.
@@ -148,15 +151,15 @@ impl<T> LinkedList<T> {
         // if tail is null that means list is empty
         // head will also point to new_node.
         if self.tail.is_null() {
-            self.head = new_node;
+            self.head = new_node as Link<T>;
         } else {
             // otherwise `next` of current tail will point to new_node
             unsafe {
-                (*self.tail).next = new_node;
+                (*(self.tail as LinkMut<T>)).next = new_node as Link<T>;
             }
         }
         // and tail will be set to new_node
-        self.tail = new_node;
+        self.tail = new_node as Link<T>;
     }
 
     /// Removes a node from the front of the list and returns the contained value.
@@ -180,13 +183,16 @@ impl<T> LinkedList<T> {
         unsafe {
             // take out the node head currently pointing to.
             // turn into a Box so that it can be dropped
-            let node = Box::from_raw(self.head);
+            let node = Box::from_raw(to_mut_ptr(self.head));
             // set head as the next of the current head
             self.head = node.next;
             // if head is becoming null that means list is empty
             // reset tail to null as well
             if self.head.is_null() {
-                self.tail = ptr::null_mut();
+                self.tail = ptr::null();
+            } else {
+                // prev of head must be null
+                (*to_mut_ptr(self.head)).prev = ptr::null();
             }
             // return the value inside node
             Some(node.val)
@@ -214,13 +220,17 @@ impl<T> LinkedList<T> {
         unsafe {
             // take out the node tail currently pointing to.
             // turn into a Box so that it can be dropped
-            let node = Box::from_raw(self.tail);
+            let node = Box::from_raw(to_mut_ptr(self.tail));
             // set tail as the prev of the current tail
             self.tail = node.prev;
             // if tail is becoming null that means list is empty
             // reset head to null as well
             if self.tail.is_null() {
-                self.head = ptr::null_mut();
+                self.head = ptr::null();
+            } else {
+                // next of tail must be null
+                let tail = self.tail as LinkMut<T>;
+                (*tail).next = ptr::null();
             }
             // return the value inside node
             Some(node.val)
@@ -263,7 +273,7 @@ impl<T> LinkedList<T> {
         unsafe {
             // return the reference to the value contains in the node
             // the head is pointing to
-            Some(&mut (*self.head).val)
+            Some(&mut (*(self.head as LinkMut<T>)).val)
         }
     }
 
@@ -303,7 +313,7 @@ impl<T> LinkedList<T> {
         unsafe {
             // return the reference to the value contains in the node
             // the head is pointing to
-            Some(&mut (*self.tail).val)
+            Some(&mut (*(self.tail as LinkMut<T>)).val)
         }
     }
 
@@ -335,7 +345,8 @@ impl<T> LinkedList<T> {
             // if self is not empty then next of current tail
             // will point to other head
             if !self.tail.is_null() {
-                (*self.tail).next = other.head;
+                (*to_mut_ptr(self.tail)).next = other.head;
+                (*to_mut_ptr(other.head)).prev = self.tail;
             }
         }
         // set tail as the other tail
@@ -346,8 +357,8 @@ impl<T> LinkedList<T> {
         }
         // clear head and tail in other list
         // so that it becomes empty
-        other.head = ptr::null_mut();
-        other.tail = ptr::null_mut();
+        other.head = ptr::null();
+        other.tail = ptr::null();
     }
 
     /// Insert a node at a given index.
@@ -432,8 +443,8 @@ impl<T> LinkedList<T> {
         if self.is_empty() {
             self.head = other.head;
             self.tail = other.tail;
-            other.head = ptr::null_mut();
-            other.tail = ptr::null_mut();
+            other.head = ptr::null();
+            other.tail = ptr::null();
             return;
         }
         let mut cursor = self.cursor_front_mut().unwrap();

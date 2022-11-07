@@ -78,9 +78,12 @@ mod traits;
 /// let list: LinkedList<u32> = LinkedList::new();
 /// ```
 ///
+
+type Link<T> = *const Node<T>;
+type LinkMut<T> = *mut Node<T>;
 pub struct LinkedList<T> {
-    head: *mut Node<T>,
-    tail: *mut Node<T>,
+    head: Link<T>,
+    tail: Link<T>,
     _phantom: PhantomData<T>,
 }
 
@@ -90,8 +93,12 @@ pub struct LinkedList<T> {
 #[derive(Debug)]
 struct Node<T> {
     val: T,
-    prev: *mut Node<T>,
-    next: *mut Node<T>,
+    prev: Link<T>,
+    next: Link<T>,
+}
+
+fn to_mut_ptr<T>(ptr: Link<T>) -> LinkMut<T> {
+    ptr as LinkMut<T>
 }
 
 pub struct RemoveUnderCursorError;
@@ -121,5 +128,12 @@ mod tests {
         list.push_front(MyStruct(2));
         list.push_front(MyStruct(3));
         assert_eq!(list.contains(&MyStruct(1)), true);
+    }
+
+    #[test]
+    fn is_covariant() {
+        fn a<'a>(x: LinkedList<&'static str>) -> LinkedList<&'a str> {
+            x
+        }
     }
 }
