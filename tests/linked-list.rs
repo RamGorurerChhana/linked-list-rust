@@ -239,3 +239,12 @@ fn test_split_at() {
     assert_eq!(list.len(), 1);
     assert_eq!(other.len(), 3);
 }
+
+#[test]
+fn test_splice_at() {
+    let mut list = LinkedList::new();
+    list.extend(0..5);
+    let other = LinkedList::from([9, 8, 7]);
+    list.splice_at(other, 0);
+    assert_eq!(list.len(), 8);
+}
